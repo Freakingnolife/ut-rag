@@ -1,22 +1,44 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { streamText } from "ai";
+import { z } from "zod";
 import { getConfig, getRetrieveDeps } from "@/lib/runtime";
 import { prepareChat } from "@/lib/chat-core";
 import { TokenBucket } from "@/lib/ratelimit";
-import type { ChatMessage } from "@/lib/types";
 
 export const runtime = "nodejs";
 
 const bucket = new TokenBucket(20, 0.5, Date.now()); // 20 burst, 1 per 2s refill
 
+const ChatMessageSchema = z.object({ role: z.enum(["user", "assistant"]), content: z.string() });
+const BodySchema = z.object({
+  message: z.string().min(1).max(8000),
+  history: z.array(ChatMessageSchema).max(30).optional().default([]),
+});
+
+// Prefer infrastructure-set headers over client-supplied x-forwarded-for (spoofable).
+// Note: x-forwarded-for is still a best-effort fallback on platforms without CF/nginx.
+function getClientIp(req: Request): string {
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-real-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "anon"
+  );
+}
+
 export async function POST(req: Request): Promise<Response> {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anon";
+  const ip = getClientIp(req);
   if (!bucket.tryRemove(ip, Date.now())) {
     return new Response("Rate limit exceeded. Please slow down.", { status: 429 });
   }
 
-  const body = (await req.json()) as { message: string; history?: ChatMessage[] };
-  const history = body.history ?? [];
+  let body: z.infer<typeof BodySchema>;
+  try {
+    body = BodySchema.parse(await req.json());
+  } catch {
+    return new Response("Invalid request body.", { status: 400 });
+  }
+  const history = body.history;
 
   let prepared;
   try {

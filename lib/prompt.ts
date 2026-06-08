@@ -25,8 +25,7 @@ export function buildMessages(
 ): { messages: ChatMessage[]; sources: SourceRef[] } {
   const { context, sources } = buildContext(chunks);
   const messages: ChatMessage[] = [
-    { role: "system", content: buildSystemPrompt() },
-    { role: "system", content: `Context:\n${context}` },
+    { role: "system", content: `${buildSystemPrompt()}\n\nContext:\n${context}` },
     ...history,
     { role: "user", content: question },
   ];

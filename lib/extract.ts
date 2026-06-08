@@ -31,7 +31,12 @@ export function extractSpecTables(html: string): SpecTable[] {
 }
 
 export function classifyDocType(url: string): DocType {
-  const p = new URL(url).pathname.toLowerCase();
+  let p: string;
+  try {
+    p = new URL(url).pathname.toLowerCase();
+  } catch {
+    return "solution";
+  }
   if (p.includes("/products/")) return "product";
   if (p.includes("/case")) return "case";
   if (p.includes("news")) return "news";

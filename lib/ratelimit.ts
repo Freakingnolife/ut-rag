@@ -5,6 +5,8 @@ interface BucketState {
   last: number; // ms
 }
 
+const MAX_BUCKET_ENTRIES = 10_000;
+
 export class TokenBucket {
   private state = new Map<string, BucketState>();
   private startMs: number;
@@ -26,6 +28,10 @@ export class TokenBucket {
     if (s.tokens >= 1) {
       s.tokens -= 1;
       ok = true;
+    }
+    // Evict oldest entry when map grows too large to prevent unbounded memory growth
+    if (!this.state.has(key) && this.state.size >= MAX_BUCKET_ENTRIES) {
+      this.state.delete(this.state.keys().next().value as string);
     }
     this.state.set(key, s);
     return ok;

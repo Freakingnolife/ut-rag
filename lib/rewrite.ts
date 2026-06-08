@@ -10,7 +10,7 @@ export async function rewriteQuery(
   if (history.length === 0) return question;
 
   const convo = history
-    .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+    .map((m) => `${m.role.toUpperCase()}: ${m.content.replace(/\n/g, " ")}`)
     .join("\n");
 
   const messages: ChatMessage[] = [

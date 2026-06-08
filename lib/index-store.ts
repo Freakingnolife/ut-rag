@@ -16,6 +16,9 @@ export async function saveIndex(dir: string, records: Chunk[], vectors: number[]
   if (records.length !== vectors.length) {
     throw new Error("saveIndex: records and vectors length mismatch");
   }
+  if (records.length > 0 && !vectors[0]?.length) {
+    throw new Error("saveIndex: vectors array contains empty vectors");
+  }
   const dim = vectors[0]?.length ?? 0;
   const flat = new Float32Array(records.length * dim);
   vectors.forEach((v, i) => {
