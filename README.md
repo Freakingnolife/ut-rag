@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# UnionTech 3D RAG Chat Agent
 
-## Getting Started
+Web chat agent that answers questions about uniontech3d.com using hybrid RAG
+(MiniMax chat + embeddings, local vector index).
 
-First, run the development server:
+## Setup
+1. `cp .env.example .env.local` and fill in `MINIMAX_API_KEY` and optionally `MINIMAX_GROUP_ID`.
+2. `npm install`
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Build the index (one-time / on refresh)
+`npm run ingest` — crawls the sitemap, extracts pages + PDFs, embeds chunks, and
+writes `data/index.bin` + `data/index.meta.json` (committed to the repo).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Evaluate retrieval
+`npm run eval` — runs `eval/golden.jsonl` and prints hit-rate + refusal correctness.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Run locally
+`npm run dev` then open http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Test
+`npm test`
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy (Vercel)
+Push to a Vercel-connected repo. The chat route runs on the Node.js runtime and the
+`data/` index is force-included via `outputFileTracingIncludes` in `next.config.ts`.
+Set `MINIMAX_API_KEY` (and optionally `MINIMAX_GROUP_ID`) in Vercel project env vars.
