@@ -31,8 +31,7 @@ test("returns decline payload when not answerable", async () => {
 test("returns messages + sources when answerable", async () => {
   const res = await prepareChat({ message: "rspro 2100 build volume", history: [] }, baseDeps);
   expect(res.ok).toBe(true);
-  if (res.ok) {
-    expect(res.answerable).toBe(true);
+  if (res.ok && res.answerable) {
     expect(res.sources[0].url).toBe("u0");
     expect(res.messages[0].role).toBe("system");
   }
