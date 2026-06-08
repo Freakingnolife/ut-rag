@@ -24,9 +24,13 @@ export function buildMessages(
   chunks: RetrievedChunk[],
 ): { messages: ChatMessage[]; sources: SourceRef[] } {
   const { context, sources } = buildContext(chunks);
+  const sanitizedHistory = history.map((m) => ({
+    ...m,
+    content: m.content.replace(/\n/g, " "),
+  }));
   const messages: ChatMessage[] = [
     { role: "system", content: `${buildSystemPrompt()}\n\nContext:\n${context}` },
-    ...history,
+    ...sanitizedHistory,
     { role: "user", content: question },
   ];
   return { messages, sources };

@@ -36,6 +36,12 @@ export default function Home() {
         body: JSON.stringify({ message, history }),
       });
 
+      if (!res.ok) {
+        const errText = await res.text();
+        update(errText || "Sorry, something went wrong. Please try again.", []);
+        return;
+      }
+
       const sources = sourcesFromHeader(res.headers.get("x-sources"));
       const ct = res.headers.get("content-type") ?? "";
 

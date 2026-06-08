@@ -7,6 +7,8 @@ import { TokenBucket } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
+// Persists per warm Vercel function instance only — not shared across instances or regions.
+// For production-grade rate limiting, use a shared store (Redis/KV) or a WAF/edge limiter.
 const bucket = new TokenBucket(20, 0.5, Date.now()); // 20 burst, 1 per 2s refill
 
 const ChatMessageSchema = z.object({ role: z.enum(["user", "assistant"]), content: z.string() });
