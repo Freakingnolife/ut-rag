@@ -1,0 +1,5 @@
+{"type":"answerable","question":"What is the build volume of the RSPro 2100?","expectedUrls":["https://www.uniontech3d.com/products/rspro-2100-large-sla-printer.html"]}
+{"type":"answerable","question":"Which printers are suited for investment casting?","expectedUrls":["https://www.uniontech3d.com/investment-casting.html"]}
+{"type":"answerable","question":"Tell me about the Lite 600 SLA printer.","expectedUrls":["https://www.uniontech3d.com/products/lite-600-industrial-resin-sla-3d-printer.html"]}
+{"type":"negative","question":"What is the best recipe for sourdough bread?","expectedUrls":[]}
+{"type":"negative","question":"Who won the 2022 World Cup?","expectedUrls":[]}
