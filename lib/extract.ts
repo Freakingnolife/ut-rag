@@ -1,14 +1,58 @@
 import * as cheerio from "cheerio";
 import type { DocType, SpecTable } from "./types";
 
-const STRIP = ["nav", "header", "footer", "script", "style", "noscript",
-  ".cookie", ".cookie-banner", "#cookie"];
+const STRIP = [
+  // Semantic tags
+  "nav", "header", "footer", "script", "style", "noscript",
+  // Cookie banners
+  ".cookie", ".cookie-banner", "#cookie",
+  // UnionTech site-specific nav/header/footer divs
+  ".sep-lx-header-mb", ".sep-menu-box", ".sep-header", ".header_down",
+  ".sep-footer", ".footer-top", ".mp_bottom", ".mp_bottom_up_container",
+  ".bottom-toggle", ".toggle", ".sep-search-box",
+  // Contact form (country dropdown bloat)
+  ".contact-bg", "form", "select",
+  // Generic nav/menu patterns
+  "[class*='menu']", "[class*='nav-']", "[class*='-nav']",
+  "[id*='menu']", "[id*='nav']",
+];
+
+// Content container selectors tried in priority order (site-specific first)
+const CONTENT_SELECTORS = [
+  // UnionTech article/blog/product detail content
+  ".richtext",
+  ".sep-primary",
+  // Generic semantic content
+  "article",
+  "main",
+  ".post-content",
+  ".entry-content",
+  ".page-content",
+  ".content-wrap",
+];
 
 export function extractMainContent(html: string): string {
   const $ = cheerio.load(html);
   for (const sel of STRIP) $(sel).remove();
-  const root = $("main").length ? $("main") : $("body");
-  return root.text().replace(/\s+\n/g, "\n").replace(/[ \t]{2,}/g, " ").trim();
+
+  // Try specific content containers first (article/product pages)
+  for (const sel of CONTENT_SELECTORS) {
+    const el = $(sel);
+    if (el.length && el.text().trim().length > 200) {
+      return el.text().replace(/\s+\n/g, "\n").replace(/[ \t]{2,}/g, " ").trim();
+    }
+  }
+
+  // For pages without a clear content container (homepage, category pages):
+  // collect all sep-section blocks which hold the real page content
+  const sections = $(".sep-section-normal, .sep-section1, .sep-section5, .sep-body");
+  if (sections.length > 0) {
+    return sections.map((_, el) => $(el).text().trim()).get().join("\n\n")
+      .replace(/\s+\n/g, "\n").replace(/[ \t]{2,}/g, " ").trim();
+  }
+
+  // Last resort: full body
+  return $("body").text().replace(/\s+\n/g, "\n").replace(/[ \t]{2,}/g, " ").trim();
 }
 
 export function extractSpecTables(html: string): SpecTable[] {

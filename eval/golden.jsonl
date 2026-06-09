@@ -1,5 +1,20 @@
-{"type":"answerable","question":"What is the build volume of the RSPro 2100?","expectedUrls":["https://www.uniontech3d.com/products/rspro-2100-large-sla-printer.html"]}
-{"type":"answerable","question":"Which printers are suited for investment casting?","expectedUrls":["https://www.uniontech3d.com/investment-casting.html"]}
-{"type":"answerable","question":"Tell me about the Lite 600 SLA printer.","expectedUrls":["https://www.uniontech3d.com/products/lite-600-industrial-resin-sla-3d-printer.html"]}
+{"type":"answerable","question":"What 3D printing technologies does UnionTech offer?","expectedUrls":["https://www.uniontech3d.com/"]}
+{"type":"answerable","question":"What are the main SLA printer models available from UnionTech?","expectedUrls":["https://www.uniontech3d.com/"]}
+{"type":"answerable","question":"What is the build volume of the RSPro 2100?","expectedUrls":["https://www.uniontech3d.com/industrial-grade-sla-rspro-2100-for-large-prototypes-and-functional-elements.html","https://www.uniontech3d.com/maximizing-efficiency-in-industrial-production-with-the-rspro-2100.html"]}
+{"type":"answerable","question":"What is the build volume of the Lite 600?","expectedUrls":["https://www.uniontech3d.com/19-industrial-grade-sla-why-the-lite-600-stands-out-in-small-batch-manufacturing.html"]}
+{"type":"answerable","question":"Which UnionTech printers are suited for investment casting?","expectedUrls":["https://www.uniontech3d.com/scaling-investment-casting-pattern-production-with-sla-based-additive-manufacturing.html","https://www.uniontech3d.com/investment-casting-with-sla.html"]}
+{"type":"answerable","question":"What resin materials are compatible with UnionTech SLA printers?","expectedUrls":["https://www.uniontech3d.com/materials-of-3d-printer"]}
+{"type":"answerable","question":"Does UnionTech offer metal 3D printers?","expectedUrls":["https://www.uniontech3d.com/"]}
+{"type":"answerable","question":"What DLP and LCD printer models does UnionTech offer?","expectedUrls":["https://www.uniontech3d.com/"]}
+{"type":"answerable","question":"How many UnionTech 3D printers are installed worldwide?","expectedUrls":["https://www.uniontech3d.com/about"]}
+{"type":"answerable","question":"What industries does UnionTech serve with its 3D printing solutions?","expectedUrls":["https://www.uniontech3d.com/"]}
+{"type":"answerable","question":"What software does UnionTech provide for 3D printing workflow?","expectedUrls":["https://www.uniontech3d.com/"]}
+{"type":"answerable","question":"Does UnionTech offer 3D printing services in addition to selling printers?","expectedUrls":["https://www.uniontech3d.com/about"]}
+{"type":"answerable","question":"When was UnionTech founded?","expectedUrls":["https://www.uniontech3d.com/about"]}
+{"type":"answerable","question":"Where is UnionTech headquartered?","expectedUrls":["https://www.uniontech3d.com/about"]}
+{"type":"answerable","question":"What is UnionTech's market share in China's 3D printing industry?","expectedUrls":["https://www.uniontech3d.com/about"]}
+{"type":"answerable","question":"Does UnionTech have dental 3D printing solutions?","expectedUrls":["https://www.uniontech3d.com/"]}
+{"type":"answerable","question":"What material partners does UnionTech work with?","expectedUrls":["https://www.uniontech3d.com/"]}
+{"type":"answerable","question":"How can I contact UnionTech for a product inquiry?","expectedUrls":["https://www.uniontech3d.com/about"]}
 {"type":"negative","question":"What is the best recipe for sourdough bread?","expectedUrls":[]}
-{"type":"negative","question":"Who won the 2022 World Cup?","expectedUrls":[]}
+{"type":"negative","question":"Who won the 2022 FIFA World Cup?","expectedUrls":[]}

@@ -5,6 +5,15 @@ import { Citations } from "@/components/Citations";
 import { sourcesFromHeader } from "@/lib/format";
 import type { ChatMessage, SourceRef } from "@/lib/types";
 
+// Strip completed <think>...</think> blocks; hide in-progress thinking too
+function stripThinking(text: string): string {
+  // Remove completed think blocks
+  let out = text.replace(/<think>[\s\S]*?<\/think>/g, "");
+  // Hide any in-progress think block (opened but not yet closed)
+  out = out.replace(/<think>[\s\S]*$/, "");
+  return out.trimStart();
+}
+
 const EXAMPLES = [
   "Compare RSPro 600 and Lite 600",
   "Which printers suit investment casting?",
@@ -56,7 +65,7 @@ export default function Home() {
           const { value, done } = await reader.read();
           if (done) break;
           acc += dec.decode(value, { stream: true });
-          update(acc, sources);
+          update(stripThinking(acc), sources);
         }
       }
     } catch {

@@ -21,19 +21,27 @@ async function main() {
   };
 
   const results: { pass: boolean }[] = [];
+  const latencies: number[] = [];
   for (const line of lines) {
     const gc = JSON.parse(line) as GoldenCase;
+    const t0 = Date.now();
     const out = await retrieve(gc.question ?? "", [], deps);
+    const ms = Date.now() - t0;
+    latencies.push(ms);
     const r = scoreCase(gc, { answerable: out.answerable, chunks: out.chunks });
     results.push(r);
+    const status = r.pass ? "PASS" : "FAIL";
+    console.log(`${status} [${gc.type}] (${ms}ms) ${gc.question}`);
     if (!r.pass) {
-      console.log(`FAIL [${gc.type}] ${gc.question}`);
       console.log(`  got: answerable=${out.answerable}, top=${out.chunks.slice(0, 3).map((c) => c.url).join(", ")}`);
     }
   }
 
   const s = summarize(results);
+  const avgMs = Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length);
+  const p95Ms = latencies.sort((a, b) => a - b)[Math.floor(latencies.length * 0.95)];
   console.log(`\nPASS ${s.passed}/${s.total} (${(s.rate * 100).toFixed(1)}%)`);
+  console.log(`Retrieval latency: avg=${avgMs}ms  p95=${p95Ms}ms`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
