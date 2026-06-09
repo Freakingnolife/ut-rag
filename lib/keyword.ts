@@ -34,9 +34,10 @@ export function keywordScores(records: Chunk[], query: string): number[] {
 }
 
 // A "model token" has a digit (e.g. "2100", "600"). Exact match = present verbatim.
+// Includes title tokens so model numbers appearing only in the page title are found.
 export function hasExactModelMatch(record: Chunk, query: string): boolean {
   const modelTokens = tokenize(query).filter((t) => /\d/.test(t));
   if (modelTokens.length === 0) return false;
-  const docTokens = new Set(tokenize(record.text));
+  const docTokens = new Set([...tokenize(record.text), ...tokenize(record.title ?? "")]);
   return modelTokens.some((t) => docTokens.has(t));
 }

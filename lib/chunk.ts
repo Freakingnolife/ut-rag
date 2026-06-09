@@ -41,7 +41,8 @@ export function buildChunks(doc: RawDoc): Chunk[] {
 
   for (const table of doc.specTables) {
     // Prefix with page title so the embedding captures which product these specs belong to
-    const prefix = doc.title ? `${doc.title} — ${table.caption}` : table.caption;
+    const caption = table.caption.trim() || "Specifications";
+    const prefix = doc.title ? `${doc.title} — ${caption}` : caption;
     out.push({
       chunkId: "",
       url: doc.url,

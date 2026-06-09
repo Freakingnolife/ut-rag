@@ -57,17 +57,14 @@ export function fuseAndRank(args: FuseArgs): RetrievedChunk[] {
 
   const fused = rrf([semRanking, kwRanking]);
 
-  const scored: RetrievedChunk[] = records.map((r, idx) => {
-    const base = fused.get(idx) ?? 0;
-    if (base === 0) return null as unknown as RetrievedChunk;
-    const auth = authorityWeight(r.docType, r.lastmod, nowIso);
-    return {
-      ...r,
-      cosine: semByIdx.get(idx) ?? 0,
-      keyword: keyword[idx] ?? 0,
-      score: base * auth,
-    };
-  }).filter(Boolean);
+  const scored = records
+    .map((r, idx) => {
+      const base = fused.get(idx) ?? 0;
+      if (base === 0) return null;
+      const auth = authorityWeight(r.docType, r.lastmod, nowIso);
+      return { ...r, cosine: semByIdx.get(idx) ?? 0, keyword: keyword[idx] ?? 0, score: base * auth } as RetrievedChunk;
+    })
+    .filter((x): x is RetrievedChunk => x !== null);
 
   return scored.sort((a, b) => b.score - a.score).slice(0, topK);
 }
@@ -76,8 +73,10 @@ export function shouldAnswer(top: RetrievedChunk[], query: string): boolean {
   if (top.length === 0) return false;
   const best = top[0];
   if (best.cosine >= COSINE_FLOOR) return true;
-  // Exact model-number match can lower the bar, but cosine must still be reasonable
-  // to avoid year numbers (e.g. "2022") triggering on unrelated content
-  if (best.cosine >= COSINE_FLOOR_MODEL_MATCH && top.some((c) => hasExactModelMatch(c, query))) return true;
+  // Exact model-number match can lower the bar, but both the overall top chunk
+  // AND the model-match chunk itself must meet the softer floor — this prevents
+  // year tokens like "2022" in off-topic queries from triggering via unrelated content.
+  if (best.cosine >= COSINE_FLOOR_MODEL_MATCH &&
+      top.some((c) => c.cosine >= COSINE_FLOOR_MODEL_MATCH && hasExactModelMatch(c, query))) return true;
   return false;
 }

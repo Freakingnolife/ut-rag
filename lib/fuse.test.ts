@@ -45,3 +45,40 @@ test("shouldAnswer rejects model match when cosine is below COSINE_FLOOR_MODEL_M
   const hit: RetrievedChunk[] = [{ ...mk("1", "product", "rspro 2100 build volume 600mm"), cosine: 0.3, keyword: 0.8, score: 0.9 }];
   expect(shouldAnswer(hit, "rspro 2100 build volume")).toBe(false);
 });
+
+test("shouldAnswer requires the model-match chunk itself to meet COSINE_FLOOR_MODEL_MATCH", () => {
+  // top[0] has acceptable cosine but no model number; top[1] has model but low cosine
+  const chunks: RetrievedChunk[] = [
+    { ...mk("0", "blog", "general 3d printing article"), cosine: 0.55, keyword: 0.4, score: 0.8 },
+    { ...mk("1", "product", "rspro 2100 build volume"), cosine: 0.3, keyword: 0.9, score: 0.7 },
+  ];
+  // top[0].cosine >= COSINE_FLOOR_MODEL_MATCH but the model-match chunk (top[1]) is below floor
+  expect(shouldAnswer(chunks, "rspro 2100 build volume")).toBe(false);
+});
+
+test("shouldAnswer answers when model-match chunk itself meets COSINE_FLOOR_MODEL_MATCH", () => {
+  // top[0] has acceptable cosine but no model; top[1] has model AND adequate cosine
+  const chunks: RetrievedChunk[] = [
+    { ...mk("0", "blog", "general 3d printing article"), cosine: 0.55, keyword: 0.4, score: 0.8 },
+    { ...mk("1", "product", "rspro 2100 build volume"), cosine: 0.52, keyword: 0.9, score: 0.7 },
+  ];
+  expect(shouldAnswer(chunks, "rspro 2100 build volume")).toBe(true);
+});
+
+test("fuseAndRank handles topK larger than qualifying chunk count without crashing", () => {
+  const records = [mk("0", "blog", "foo", null)];
+  const semantic = [{ idx: 0, score: 0.8 }];
+  const keyword = [0.5];
+  const result = fuseAndRank({ records, semantic, keyword, nowIso: "2026-06-09T00:00:00Z", topK: 10 });
+  expect(result.length).toBeLessThanOrEqual(1);
+});
+
+test("fuseAndRank returns keyword-only results when semantic list is empty", () => {
+  const records = [
+    mk("0", "product", "rspro 2100 build volume", null),
+    mk("1", "blog", "unrelated blog post", null),
+  ];
+  const keyword = [0.9, 0.1];
+  const result = fuseAndRank({ records, semantic: [], keyword, nowIso: "2026-06-09T00:00:00Z", topK: 2 });
+  expect(result[0].chunkId).toBe("0");
+});
