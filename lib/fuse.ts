@@ -7,7 +7,10 @@ const DOC_AUTHORITY: Record<DocType, number> = {
   case: 0.9, company: 0.85, blog: 0.7, news: 0.65,
 };
 
-export const COSINE_FLOOR = 0.28;
+// embo-01 produces high scores (0.70-0.85) for on-topic content, ~0.40-0.55 for off-topic.
+// Floor set above the off-topic band; hasExactModelMatch can override with a softer floor.
+export const COSINE_FLOOR = 0.60;
+export const COSINE_FLOOR_MODEL_MATCH = 0.50;
 
 export function rrf(rankings: number[][], k = 60): Map<number, number> {
   const scores = new Map<number, number>();
@@ -43,8 +46,12 @@ export function fuseAndRank(args: FuseArgs): RetrievedChunk[] {
 
   const semByIdx = new Map(semantic.map((h) => [h.idx, h.score]));
   const semRanking = [...semantic].sort((a, b) => b.score - a.score).map((h) => h.idx);
+
+  // Full keyword ranking across all records — keyword-strong chunks surface even when
+  // cosine search misses them (embo-01 scores English spec text poorly).
   const kwRanking = keyword
     .map((s, idx) => ({ idx, s }))
+    .filter((x) => x.s > 0)
     .sort((a, b) => b.s - a.s)
     .map((x) => x.idx);
 
@@ -52,6 +59,7 @@ export function fuseAndRank(args: FuseArgs): RetrievedChunk[] {
 
   const scored: RetrievedChunk[] = records.map((r, idx) => {
     const base = fused.get(idx) ?? 0;
+    if (base === 0) return null as unknown as RetrievedChunk;
     const auth = authorityWeight(r.docType, r.lastmod, nowIso);
     return {
       ...r,
@@ -59,7 +67,7 @@ export function fuseAndRank(args: FuseArgs): RetrievedChunk[] {
       keyword: keyword[idx] ?? 0,
       score: base * auth,
     };
-  });
+  }).filter(Boolean);
 
   return scored.sort((a, b) => b.score - a.score).slice(0, topK);
 }
@@ -68,5 +76,8 @@ export function shouldAnswer(top: RetrievedChunk[], query: string): boolean {
   if (top.length === 0) return false;
   const best = top[0];
   if (best.cosine >= COSINE_FLOOR) return true;
-  return top.some((c) => hasExactModelMatch(c, query));
+  // Exact model-number match can lower the bar, but cosine must still be reasonable
+  // to avoid year numbers (e.g. "2022") triggering on unrelated content
+  if (best.cosine >= COSINE_FLOOR_MODEL_MATCH && top.some((c) => hasExactModelMatch(c, query))) return true;
+  return false;
 }

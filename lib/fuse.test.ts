@@ -36,7 +36,12 @@ test("shouldAnswer declines on weak cosine and no exact match", () => {
   expect(shouldAnswer(weak, "totally unrelated question")).toBe(false);
 });
 
-test("shouldAnswer answers when an exact model match exists even at mid cosine", () => {
-  const hit: RetrievedChunk[] = [{ ...mk("1", "product", "rspro 2100 build volume 600mm"), cosine: 0.3, keyword: 0.8, score: 0.9 }];
+test("shouldAnswer answers when an exact model match exists at or above COSINE_FLOOR_MODEL_MATCH", () => {
+  const hit: RetrievedChunk[] = [{ ...mk("1", "product", "rspro 2100 build volume 600mm"), cosine: 0.52, keyword: 0.8, score: 0.9 }];
   expect(shouldAnswer(hit, "rspro 2100 build volume")).toBe(true);
+});
+
+test("shouldAnswer rejects model match when cosine is below COSINE_FLOOR_MODEL_MATCH", () => {
+  const hit: RetrievedChunk[] = [{ ...mk("1", "product", "rspro 2100 build volume 600mm"), cosine: 0.3, keyword: 0.8, score: 0.9 }];
+  expect(shouldAnswer(hit, "rspro 2100 build volume")).toBe(false);
 });
