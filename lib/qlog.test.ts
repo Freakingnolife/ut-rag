@@ -37,6 +37,18 @@ describe("formatQuestionLog", () => {
     expect(parsed.answered).toBe(false);
     expect(parsed.sources).toEqual([]);
   });
+
+  it("preserves streamError field when present", () => {
+    const errorRecord: QuestionLogRecord = {
+      ...baseRecord,
+      answered: false,
+      answer: "",
+      sources: [],
+      streamError: true,
+    };
+    const parsed = JSON.parse(formatQuestionLog(errorRecord));
+    expect(parsed.streamError).toBe(true);
+  });
 });
 
 describe("logQuestion", () => {

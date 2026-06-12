@@ -7,6 +7,7 @@ export interface QuestionLogRecord {
   answered: boolean;
   answer: string;
   sources: SourceRef[];
+  streamError?: true;
 }
 
 export function formatQuestionLog(record: QuestionLogRecord): string {

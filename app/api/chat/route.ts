@@ -89,7 +89,8 @@ export async function POST(req: Request): Promise<Response> {
         sources: prepared.sources,
       });
     },
-    onError: () => {
+    onError: ({ error }) => {
+      console.error("streamText error", requestId, String(error));
       logQuestion({
         ts,
         requestId,
@@ -97,6 +98,7 @@ export async function POST(req: Request): Promise<Response> {
         answered: false,
         answer: "",
         sources: [],
+        streamError: true,
       });
     },
   });
