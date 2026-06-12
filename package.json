@@ -9,7 +9,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "ingest": "tsx scripts/ingest.ts",
-    "eval": "tsx scripts/eval.ts"
+    "eval": "tsx scripts/eval.ts",
+    "eval:answers": "tsx scripts/eval-answers.ts"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.48",
