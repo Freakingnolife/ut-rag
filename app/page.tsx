@@ -21,8 +21,8 @@ function citedSources(text: string, sources: SourceRef[]): SourceRef[] {
 }
 
 const EXAMPLES = [
-  "Compare RSPro 600 and Lite 600",
-  "Which printers suit investment casting?",
+  "What are the main SLA printer models available from UnionTech?",
+  "Does UnionTech have dental 3D printing solutions?",
   "What is the build volume of the RSPro 2100?",
 ];
 
@@ -49,6 +49,18 @@ function useMediaQuery(query: string): boolean {
     return () => m.removeEventListener("change", on);
   }, [query]);
   return matches;
+}
+
+// Pulsing dots shown while the first token is still streaming in (~1s), so the wait reads as
+// "working" rather than frozen.
+function TypingIndicator() {
+  return (
+    <span role="status" aria-label="Assistant is thinking" style={{ display: "inline-flex", gap: 5, alignItems: "center", padding: "2px 0" }}>
+      {[0, 1, 2].map((i) => (
+        <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--signal-cyan)", animation: "ut-blink 1.2s ease-in-out infinite", animationDelay: `${i * 0.18}s` }} />
+      ))}
+    </span>
+  );
 }
 
 function SourceCard({ s }: { s: SourceRef }) {
@@ -198,7 +210,7 @@ export default function Home() {
                           )}
                         </div>
                         <div style={{ padding: "16px 18px", fontSize: 15.5, color: "#dfe7ee" }}>
-                          {t.content ? <Markdown text={t.content} /> : (busy && i === turns.length - 1 ? "…" : "")}
+                          {t.content ? <Markdown text={t.content} /> : (busy && i === turns.length - 1 ? <TypingIndicator /> : "")}
                         </div>
                       </div>
                       {isMobile && cited.length > 0 && (
