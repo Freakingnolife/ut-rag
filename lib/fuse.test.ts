@@ -31,6 +31,27 @@ test("fuseAndRank surfaces the product spec chunk above an old blog mention", ()
   expect(ranked[0].cosine).toBeCloseTo(0.69, 5);
 });
 
+test("shouldAnswer rescues strong-keyword chunks just below the cosine floor", () => {
+  // colloquial query: right page found (kw 1.0) but slang depresses cosine
+  const hit: RetrievedChunk[] = [{ ...mk("1", "blog", "resin shoe molds printers"), cosine: 0.59, keyword: 1.0, score: 0.9 }];
+  expect(shouldAnswer(hit, "can your printers make shoes")).toBe(true);
+});
+
+test("shouldAnswer rescues full-keyword match down to the lower floor", () => {
+  const hit: RetrievedChunk[] = [{ ...mk("1", "product", "dental 3d printer d300"), cosine: 0.42, keyword: 1.0, score: 0.9 }];
+  expect(shouldAnswer(hit, "do yall do dental stuff")).toBe(true);
+});
+
+test("shouldAnswer does not rescue weak keyword overlap below the floor", () => {
+  const hit: RetrievedChunk[] = [{ ...mk("1", "news", "company funding round"), cosine: 0.57, keyword: 0.5, score: 0.9 }];
+  expect(shouldAnswer(hit, "wats the biggest printer u guys sell")).toBe(false);
+});
+
+test("shouldAnswer does not rescue strong keyword on cold cosine", () => {
+  const hit: RetrievedChunk[] = [{ ...mk("1", "blog", "totally different topic"), cosine: 0.3, keyword: 1.0, score: 0.9 }];
+  expect(shouldAnswer(hit, "some query")).toBe(false);
+});
+
 test("shouldAnswer declines on weak cosine and no exact match", () => {
   const weak: RetrievedChunk[] = [{ ...mk("0", "blog", "unrelated"), cosine: 0.1, keyword: 0, score: 0.1 }];
   expect(shouldAnswer(weak, "totally unrelated question")).toBe(false);

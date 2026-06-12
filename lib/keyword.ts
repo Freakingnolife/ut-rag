@@ -9,6 +9,9 @@ const STOPWORDS = new Set([
   "that","this","these","those","it","its","not","no","nor","so","as",
   "if","then","than","while","we","our","you","your","they","their",
   "he","she","his","her","all","been","there","here","some","any",
+  // colloquial fillers — keep keyword overlap focused on content words
+  "stuff","guys","yall","u","ur","wats","whats","plz","pls","ya",
+  "hey","hi","hello","thanks","gonna","wanna",
 ]);
 
 // CJK has no word boundaries; character bigrams are the standard segmenter-free unit.
@@ -22,9 +25,17 @@ function cjkBigrams(run: string): string[] {
   return out;
 }
 
+// "lite600" must match docs that write "Lite 600": keep the full run and add
+// letter/digit segments, but only segments of 2+ chars ("3d" stays whole).
+function splitLetterDigit(run: string): string[] {
+  const segs = run.match(/[a-z]+|[0-9]+/g) ?? [];
+  if (segs.length <= 1) return [run];
+  return [run, ...segs.filter((s) => s.length >= 2)];
+}
+
 export function tokenize(s: string): string[] {
   const runs = s.toLowerCase().match(TOKEN_RE) ?? [];
-  return runs.flatMap((r) => (CJK_RUN.test(r) ? cjkBigrams(r) : [r]));
+  return runs.flatMap((r) => (CJK_RUN.test(r) ? cjkBigrams(r) : splitLetterDigit(r)));
 }
 
 // Like tokenize but removes stopwords — use for query tokens only, not document tokens.

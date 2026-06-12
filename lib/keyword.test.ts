@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { tokenize, keywordScores, hasExactModelMatch } from "./keyword";
+import { tokenize, tokenizeQuery, keywordScores, hasExactModelMatch } from "./keyword";
 import type { Chunk } from "./types";
 
 const mk = (text: string): Chunk => ({
@@ -15,6 +15,19 @@ test("keywordScores ranks higher for more overlap", () => {
   const records = [mk("build volume of the rspro 2100"), mk("dental resin colors")];
   const scores = keywordScores(records, "rspro 2100 build volume");
   expect(scores[0]).toBeGreaterThan(scores[1]);
+});
+
+test("tokenize splits concatenated model names at letter-digit boundaries", () => {
+  expect(tokenize("Lite600")).toEqual(["lite600", "lite", "600"]);
+  expect(tokenize("RD3000")).toEqual(["rd3000", "rd", "3000"]);
+});
+
+test("tokenize keeps short letter-digit runs intact", () => {
+  expect(tokenize("3d")).toEqual(["3d"]);
+});
+
+test("tokenizeQuery drops colloquial fillers", () => {
+  expect(tokenizeQuery("do yall do dental stuff")).toEqual(["dental"]);
 });
 
 test("tokenize emits bigrams for CJK runs", () => {

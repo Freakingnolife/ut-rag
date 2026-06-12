@@ -10,6 +10,8 @@ const STRIP = [
   ".sep-lx-header-mb", ".sep-menu-box", ".sep-header", ".header_down",
   ".sep-footer", ".footer-top", ".mp_bottom", ".mp_bottom_up_container",
   ".bottom-toggle", ".toggle", ".sep-search-box",
+  // uniontech3d.cn (Chinese CMS) — nav is "daohang" (导航), no English class names
+  ".daohang", "#footer", ".footer-nav", ".sidebar-menu__list",
   // Contact form (country dropdown bloat)
   ".contact-bg", "form", "select",
   // Generic nav/menu patterns

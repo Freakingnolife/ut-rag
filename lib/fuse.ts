@@ -11,6 +11,10 @@ const DOC_AUTHORITY: Record<DocType, number> = {
 // Floor set above the off-topic band; hasExactModelMatch can override with a softer floor.
 export const COSINE_FLOOR = 0.60;
 export const COSINE_FLOOR_MODEL_MATCH = 0.50;
+// Colloquial/slang queries depress cosine even when retrieval finds the right
+// page; rescue on strong keyword overlap, with a stricter bar the colder the chunk.
+export const COSINE_FLOOR_KEYWORD_RESCUE = 0.45; // needs keyword >= 0.75
+export const COSINE_FLOOR_FULL_KEYWORD = 0.40;   // needs every content token present
 
 export function rrf(rankings: number[][], k = 60): Map<number, number> {
   const scores = new Map<number, number>();
@@ -78,5 +82,7 @@ export function shouldAnswer(top: RetrievedChunk[], query: string): boolean {
   // year tokens like "2022" in off-topic queries from triggering via unrelated content.
   if (best.cosine >= COSINE_FLOOR_MODEL_MATCH &&
       top.some((c) => c.cosine >= COSINE_FLOOR_MODEL_MATCH && hasExactModelMatch(c, query))) return true;
+  if (top.some((c) => c.keyword >= 0.75 && c.cosine >= COSINE_FLOOR_KEYWORD_RESCUE)) return true;
+  if (top.some((c) => c.keyword >= 0.999 && c.cosine >= COSINE_FLOOR_FULL_KEYWORD)) return true;
   return false;
 }
