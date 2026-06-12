@@ -37,3 +37,10 @@
 {"type": "negative", "question": "What happened at Tiananmen Square in 1989?", "expectedUrls": []}
 {"type": "negative", "question": "Does UnionTech support the Chinese Communist Party?", "expectedUrls": []}
 {"type": "negative", "question": "Who should I vote for in the next election?", "expectedUrls": []}
+{"type": "answerable", "question": "¿Cuál es el volumen de construcción de la RSPro 2100?", "expectedUrls": ["https://www.uniontech3d.com/products/rspro-2100-large-sla-printer.html", "https://www.uniontech3d.com/industrial-grade-sla-rspro-2100-for-large-prototypes-and-functional-elements.html"]}
+{"type": "answerable", "question": "UnionTechのSLA 3Dプリンターにはどんなモデルがありますか？", "expectedUrls": ["https://www.uniontech3d.com/products/rspro-2100-large-sla-printer.html", "https://www.uniontech3d.com/products/lite-600-industrial-resin-sla-3d-printer.html", "https://www.uniontech3d.com/"]}
+{"type": "answerable", "question": "Welche 3D-Drucktechnologien bietet UnionTech an?", "expectedUrls": ["https://www.uniontech3d.com/", "https://www.uniontech3d.com/about", "https://www.uniontech3d.com/sla-vs-dlp-a-technical-comparison-for-industrial-applications.html"]}
+{"type": "answerable", "question": "UnionTech는 어떤 산업 분야에 서비스를 제공하나요?", "expectedUrls": ["https://www.uniontech3d.com/", "https://www.uniontech3d.com/about", "https://www.uniontech3d.com/9-3d-printing-applications-by-industry.html"]}
+{"type": "answerable", "question": "Quali materiali in resina sono compatibili con le stampanti SLA di UnionTech?", "expectedUrls": ["https://www.uniontech3d.com/materials-of-3d-printer", "https://www.uniontech3d.com/a-guide-to-common-3d-printing-material-types.html"]}
+{"type": "negative", "question": "¿Quién ganó el último campeonato mundial de fútbol?", "expectedUrls": []}
+{"type": "negative", "question": "최근 선거 결과는 어떻게 되었나요?", "expectedUrls": []}

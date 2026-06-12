@@ -13,6 +13,14 @@ test("system prompt forbids fabrication and requires citations", () => {
   expect(p).toContain("[n]");
 });
 
+test("system prompt instructs model to always respond in the user's language", () => {
+  const p = buildSystemPrompt();
+  // Must have a general language-mirroring rule separate from the decline clause.
+  // Strip the decline sentence so we don't match the narrow "Decline in the language..." clause.
+  const withoutDecline = p.replace(/[^.]*[Dd]ecline[^.]*\./g, "");
+  expect(withoutDecline).toMatch(/respond.+language|language.+user (wrote|asked|used|input|types?)/i);
+});
+
 test("buildContext numbers sources 1..k and returns aligned source refs", () => {
   const { context, sources } = buildContext(chunks);
   expect(context).toContain("[1]");
