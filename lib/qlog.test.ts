@@ -15,10 +15,10 @@ afterEach(() => {
 });
 
 describe("formatQuestionLog", () => {
-  it("emits a single-line JSON string with a leading type marker", () => {
+  it("emits a single-line JSON string with type:qlog marker", () => {
     const line = formatQuestionLog(baseRecord);
     expect(line).not.toContain("\n");
-    expect(line.startsWith('{"type":"qlog"')).toBe(true);
+    expect(JSON.parse(line).type).toBe("qlog");
   });
 
   it("round-trips every field through JSON.parse", () => {

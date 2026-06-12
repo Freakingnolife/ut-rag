@@ -10,7 +10,7 @@ export interface QuestionLogRecord {
 }
 
 export function formatQuestionLog(record: QuestionLogRecord): string {
-  return JSON.stringify({ type: "qlog", ...record });
+  return JSON.stringify({ ...record, type: "qlog" as const });
 }
 
 export function logQuestion(record: QuestionLogRecord): void {
