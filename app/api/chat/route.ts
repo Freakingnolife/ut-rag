@@ -36,6 +36,7 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const requestId = crypto.randomUUID();
+  const ts = new Date().toISOString();
 
   let body: z.infer<typeof BodySchema>;
   try {
@@ -58,7 +59,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!prepared.answerable) {
     const answer = "I don't have that information in UnionTech's documentation.";
     logQuestion({
-      ts: new Date().toISOString(),
+      ts,
       requestId,
       question: body.message,
       answered: false,
@@ -80,12 +81,22 @@ export async function POST(req: Request): Promise<Response> {
     messages: prepared.messages,
     onFinish: ({ text }) => {
       logQuestion({
-        ts: new Date().toISOString(),
+        ts,
         requestId,
         question: body.message,
         answered: true,
         answer: text,
         sources: prepared.sources,
+      });
+    },
+    onError: () => {
+      logQuestion({
+        ts,
+        requestId,
+        question: body.message,
+        answered: false,
+        answer: "",
+        sources: [],
       });
     },
   });
