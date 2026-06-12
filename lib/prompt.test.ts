@@ -37,3 +37,14 @@ test("buildMessages places system + context + history + question", () => {
   expect(messages[0].role).toBe("system");
   expect(messages.some((m) => m.content.includes("build volume?"))).toBe(true);
 });
+
+test("buildMessages restates the language rule after the context", () => {
+  const { messages } = buildMessages([], "build volume?", chunks);
+  const system = messages[0].content;
+  const contextAt = system.indexOf("Context:");
+  // A language-enforcement reminder must appear AFTER the context block, so it
+  // isn't out-weighed by source text in another language (e.g. Chinese).
+  const reminder = system.slice(contextAt).match(/respond in the (?:same )?language/i);
+  expect(contextAt).toBeGreaterThanOrEqual(0);
+  expect(reminder).not.toBeNull();
+});

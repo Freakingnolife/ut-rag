@@ -31,8 +31,11 @@ export function buildMessages(
     ...m,
     content: m.content.replace(/\n/g, " "),
   }));
+  const languageReminder =
+    "Reminder: the context above may be written in a different language than the user. " +
+    "Ignore the context's language and respond in the same language as the user's latest message.";
   const messages: ChatMessage[] = [
-    { role: "system", content: `${buildSystemPrompt()}\n\nContext:\n${context}` },
+    { role: "system", content: `${buildSystemPrompt()}\n\nContext:\n${context}\n\n${languageReminder}` },
     ...sanitizedHistory,
     { role: "user", content: question },
   ];
