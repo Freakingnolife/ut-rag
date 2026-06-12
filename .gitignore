@@ -43,3 +43,12 @@ data/raw/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# runtime / session state
+.omx/
+.playwright-mcp/
+
+# scratch debug scripts (see AGENTS.md)
+scripts/debug_*.ts
+scripts/check_*.ts
+scripts/eval_debug.ts
