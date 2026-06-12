@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getConfig, getRetrieveDeps } from "@/lib/runtime";
 import { prepareChat } from "@/lib/chat-core";
 import { TokenBucket } from "@/lib/ratelimit";
+import { logQuestion } from "@/lib/qlog";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,8 @@ export async function POST(req: Request): Promise<Response> {
     return new Response("Rate limit exceeded. Please slow down.", { status: 429 });
   }
 
+  const requestId = crypto.randomUUID();
+
   let body: z.infer<typeof BodySchema>;
   try {
     body = BodySchema.parse(await req.json());
@@ -53,10 +56,16 @@ export async function POST(req: Request): Promise<Response> {
   if (!prepared.ok) return new Response(prepared.reason, { status: 400 });
 
   if (!prepared.answerable) {
-    return Response.json({
-      answer: "I don't have that information in UnionTech's documentation.",
+    const answer = "I don't have that information in UnionTech's documentation.";
+    logQuestion({
+      ts: new Date().toISOString(),
+      requestId,
+      question: body.message,
+      answered: false,
+      answer,
       sources: [],
     });
+    return Response.json({ answer, sources: [] });
   }
 
   const cfg = getConfig();
@@ -69,6 +78,16 @@ export async function POST(req: Request): Promise<Response> {
   const result = streamText({
     model: provider(cfg.CHAT_MODEL),
     messages: prepared.messages,
+    onFinish: ({ text }) => {
+      logQuestion({
+        ts: new Date().toISOString(),
+        requestId,
+        question: body.message,
+        answered: true,
+        answer: text,
+        sources: prepared.sources,
+      });
+    },
   });
 
   return result.toTextStreamResponse({
