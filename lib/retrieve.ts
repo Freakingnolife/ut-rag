@@ -39,6 +39,7 @@ export async function retrieve(
     keyword,
     nowIso: deps.nowIso,
     topK,
+    query,
   });
 
   return { query, chunks, answerable: shouldAnswer(chunks, query) };

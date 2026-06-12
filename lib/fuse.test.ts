@@ -31,6 +31,53 @@ test("fuseAndRank surfaces the product spec chunk above an old blog mention", ()
   expect(ranked[0].cosine).toBeCloseTo(0.69, 5);
 });
 
+test("fuseAndRank lifts the product spec page above news/case pages when the query names its model", () => {
+  // Reproduces the live failure on "build volume of the RSPro 2100": embo-01 ranks
+  // marketing/news copy above the catalog page, so the product page falls out of the
+  // semantic top-N and survives only via a single keyword-RRF contribution — which
+  // news/case pages (two contributions each) outscore.
+  const records = [
+    mk("news0", "news", "rspro 2100 unveiled at formnext, a milestone for large build prototypes", "2026-01-01"),
+    mk("news1", "news", "uniontech and 3d printing help produce parts", "2026-01-01"),
+    mk("case0", "case", "one of china's am pioneers builds with sla", "2026-01-01"),
+    // CMS gives the catalog page a generic <title>; the model lives only in the URL slug.
+    { ...mk("prod", "product", "build volume 600 x 600 x 400 mm specifications", "2026-01-01"), url: "https://x/products/rspro-2100-large-sla-printer.html" },
+  ];
+  const semantic = [{ idx: 0, score: 0.68 }, { idx: 1, score: 0.66 }, { idx: 2, score: 0.64 }];
+  const keyword = [0.5, 0.2, 0.2, 1.0];
+  const query = "what is the build volume of the rspro 2100";
+  const ranked = fuseAndRank({ records, semantic, keyword, nowIso: "2026-06-09T00:00:00Z", topK: 4, query });
+  expect(ranked[0].chunkId).toBe("prod");
+});
+
+test("fuseAndRank boosts the model's own page by URL slug, not another product that mentions it in a table", () => {
+  // The live bug: rspro800-x / rspro-1400 list "2100" in a comparison table (body text),
+  // so a body-text model match wrongly boosted them above the real RSPro 2100 page. The URL
+  // slug — rspro-800x vs rspro-2100 — is what tells them apart.
+  const records = [
+    { ...mk("other", "product", "rspro 800x specs. comparison vs rspro 2100 and rspro 1400", "2026-01-01"), url: "https://x/products/rspro-800x.html" },
+    { ...mk("prod", "product", "build volume specifications", "2026-01-01"), url: "https://x/products/rspro-2100-large-sla-printer.html" },
+  ];
+  const semantic = [{ idx: 0, score: 0.68 }];
+  const keyword = [1.0, 0.6];
+  const ranked = fuseAndRank({ records, semantic, keyword, nowIso: "2026-06-09T00:00:00Z", topK: 2, query: "rspro 2100 build volume" });
+  expect(ranked[0].chunkId).toBe("prod");
+});
+
+test("fuseAndRank model boost does not fire for queries without a model number", () => {
+  // Same shape as the boost test, but the query names no model number — so the
+  // product page must NOT be lifted and the case page stays on top.
+  const records = [
+    mk("news0", "news", "unveiled at formnext, a milestone for large build prototypes", "2026-01-01"),
+    mk("case0", "case", "one of china's am pioneers builds with sla", "2026-01-01"),
+    mk("prod", "product", "build volume 600 x 600 x 400 mm specifications", "2026-01-01"),
+  ];
+  const semantic = [{ idx: 0, score: 0.68 }, { idx: 1, score: 0.64 }];
+  const keyword = [0.5, 0.2, 1.0];
+  const ranked = fuseAndRank({ records, semantic, keyword, nowIso: "2026-06-09T00:00:00Z", topK: 3, query: "what build volume do your large printers have" });
+  expect(ranked[0].chunkId).not.toBe("prod");
+});
+
 test("shouldAnswer rescues strong-keyword chunks just below the cosine floor", () => {
   // colloquial query: right page found (kw 1.0) but slang depresses cosine
   const hit: RetrievedChunk[] = [{ ...mk("1", "blog", "resin shoe molds printers"), cosine: 0.59, keyword: 1.0, score: 0.9 }];
@@ -84,6 +131,21 @@ test("shouldAnswer answers when model-match chunk itself meets COSINE_FLOOR_MODE
     { ...mk("1", "product", "rspro 2100 build volume"), cosine: 0.52, keyword: 0.9, score: 0.7 },
   ];
   expect(shouldAnswer(chunks, "rspro 2100 build volume")).toBe(true);
+});
+
+test("shouldAnswer answers when the model's own catalog page surfaced by URL slug despite cold cosine", () => {
+  // "RS Pro 2100 specs": tokenizes as rs/pro (not "rspro") so keyword is weak, and embo-01
+  // dropped the page from the semantic top-N so cosine is 0 — but the URL slug IS rspro-2100,
+  // and the model boost already made it the top result. Don't refuse the page we just chose.
+  const hit: RetrievedChunk[] = [
+    { ...mk("1", "product", "rspro 2100 specifications build volume"), url: "u/products/rspro-2100-large-sla-printer.html", cosine: 0.0, keyword: 0.25, score: 0.05 },
+  ];
+  expect(shouldAnswer(hit, "RS Pro 2100 specs")).toBe(true);
+});
+
+test("shouldAnswer still refuses an off-topic year that matches no product slug", () => {
+  const hit: RetrievedChunk[] = [{ ...mk("1", "news", "company funding"), cosine: 0.45, keyword: 0.2, score: 0.1 }];
+  expect(shouldAnswer(hit, "Who won the 2022 FIFA World Cup?")).toBe(false);
 });
 
 test("fuseAndRank handles topK larger than qualifying chunk count without crashing", () => {

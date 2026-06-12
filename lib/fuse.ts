@@ -1,5 +1,5 @@
 import type { Chunk, DocType, RetrievedChunk } from "./types";
-import { hasExactModelMatch } from "./keyword";
+import { hasExactModelMatch, hasModelInUrl } from "./keyword";
 import type { SearchHit as Hit } from "./vector";
 
 const DOC_AUTHORITY: Record<DocType, number> = {
@@ -15,6 +15,14 @@ export const COSINE_FLOOR_MODEL_MATCH = 0.50;
 // page; rescue on strong keyword overlap, with a stricter bar the colder the chunk.
 export const COSINE_FLOOR_KEYWORD_RESCUE = 0.45; // needs keyword >= 0.75
 export const COSINE_FLOOR_FULL_KEYWORD = 0.40;   // needs every content token present
+
+// A query naming an exact model number ("RSPro 2100", "AME RD3000") wants that model's
+// catalog/spec page — not the news or case study that merely mentions it. embo-01 routinely
+// drops the product page out of the semantic top-N entirely (see lib/fuse.test.ts), leaving
+// it on a single weak keyword-RRF contribution. A decisive boost on the product page whose
+// URL slug is that model pulls it back to the top; the URL gate keeps it off comparison
+// pages that only mention the model in passing.
+export const MODEL_PRODUCT_BOOST = 4.0;
 
 export function rrf(rankings: number[][], k = 60): Map<number, number> {
   const scores = new Map<number, number>();
@@ -43,10 +51,11 @@ export interface FuseArgs {
   keyword: number[];
   nowIso: string;
   topK: number;
+  query?: string;
 }
 
 export function fuseAndRank(args: FuseArgs): RetrievedChunk[] {
-  const { records, semantic, keyword, nowIso, topK } = args;
+  const { records, semantic, keyword, nowIso, topK, query } = args;
 
   const semByIdx = new Map(semantic.map((h) => [h.idx, h.score]));
   const semRanking = [...semantic].sort((a, b) => b.score - a.score).map((h) => h.idx);
@@ -66,7 +75,8 @@ export function fuseAndRank(args: FuseArgs): RetrievedChunk[] {
       const base = fused.get(idx) ?? 0;
       if (base === 0) return null;
       const auth = authorityWeight(r.docType, r.lastmod, nowIso);
-      return { ...r, cosine: semByIdx.get(idx) ?? 0, keyword: keyword[idx] ?? 0, score: base * auth } as RetrievedChunk;
+      const boost = query && r.docType === "product" && hasModelInUrl(r, query) ? MODEL_PRODUCT_BOOST : 1;
+      return { ...r, cosine: semByIdx.get(idx) ?? 0, keyword: keyword[idx] ?? 0, score: base * auth * boost } as RetrievedChunk;
     })
     .filter((x): x is RetrievedChunk => x !== null);
 
@@ -82,6 +92,11 @@ export function shouldAnswer(top: RetrievedChunk[], query: string): boolean {
   // year tokens like "2022" in off-topic queries from triggering via unrelated content.
   if (best.cosine >= COSINE_FLOOR_MODEL_MATCH &&
       top.some((c) => c.cosine >= COSINE_FLOOR_MODEL_MATCH && hasExactModelMatch(c, query))) return true;
+  // The model boost can place a product page whose URL slug IS the queried model at the top
+  // even with cold cosine (embo-01 missed it) and weak keyword (slang/spacing like "RS Pro").
+  // The slug carrying the exact model number is itself the precision guard — off-topic years
+  // like "2022" match no product slug — so trust it and answer.
+  if (top.some((c) => c.docType === "product" && hasModelInUrl(c, query))) return true;
   if (top.some((c) => c.keyword >= 0.75 && c.cosine >= COSINE_FLOOR_KEYWORD_RESCUE)) return true;
   if (top.some((c) => c.keyword >= 0.999 && c.cosine >= COSINE_FLOOR_FULL_KEYWORD)) return true;
   return false;

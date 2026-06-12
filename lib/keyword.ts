@@ -64,3 +64,16 @@ export function hasExactModelMatch(record: Chunk, query: string): boolean {
   const docTokens = new Set([...tokenize(record.text), ...tokenize(record.title ?? "")]);
   return modelTokens.some((t) => docTokens.has(t));
 }
+
+// Stricter than hasExactModelMatch: the query's model number is in the page URL slug, not
+// just body text. The slug is canonical — "/products/rspro-2100-..." unambiguously IS the
+// 2100 page — so this distinguishes the model's own catalog page from a comparison page that
+// merely lists it (whose slug carries a different model), and from CMS-generic <title> tags
+// that omit the model entirely. Product titles/slugs never carry stray year tokens, so it
+// won't fire on off-topic queries like "2022 World Cup".
+export function hasModelInUrl(record: Chunk, query: string): boolean {
+  const modelTokens = tokenize(query).filter((t) => /\d/.test(t));
+  if (modelTokens.length === 0) return false;
+  const urlTokens = new Set(tokenize(record.url));
+  return modelTokens.some((t) => urlTokens.has(t));
+}
