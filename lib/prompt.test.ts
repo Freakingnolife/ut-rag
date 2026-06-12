@@ -21,6 +21,16 @@ test("system prompt instructs model to always respond in the user's language", (
   expect(withoutDecline).toMatch(/respond.+language|language.+user (wrote|asked|used|input|types?)/i);
 });
 
+test("system prompt forbids inferring a product's technology/category from list adjacency", () => {
+  const p = buildSystemPrompt().toLowerCase();
+  // The over-claim failures all came from attributing a technology/category to a
+  // model that merely appeared in a list or near a heading. The prompt must require
+  // an explicit per-product statement and reject adjacency as evidence.
+  expect(p).toMatch(/explicit/);
+  expect(p).toMatch(/technolog|categor/);
+  expect(p).toMatch(/list|near|heading|appears|proximity/);
+});
+
 test("buildContext numbers sources 1..k and returns aligned source refs", () => {
   const { context, sources } = buildContext(chunks);
   expect(context).toContain("[1]");

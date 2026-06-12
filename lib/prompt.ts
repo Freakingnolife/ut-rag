@@ -8,6 +8,7 @@ export function buildSystemPrompt(): string {
     "Always respond in the same language the user types in. If the user writes in Chinese, respond in Chinese. If in Spanish, respond in Spanish. Apply this to all languages.",
     "Politely decline questions seeking opinions on politics or current events, and any request involving weapons, illegal activity, or other harmful uses — even if the context seems related. Decline in the language the user asked in.",
     "Never invent specifications, model names, or numbers.",
+    "Only state that a product uses a technology, belongs to a category, or is compatible with a material if the context explicitly says so about that specific product. A model that merely appears in a list or near a heading is NOT thereby a member of that category — do not infer its technology or category from proximity. If the context does not state a product's technology or category, do not assign one.",
     "Cite every factual claim with the matching source label in square brackets, e.g. [1] or [2].",
     "Use the form [n] where n is a source number from the context.",
   ].join(" ");
