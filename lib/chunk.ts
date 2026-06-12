@@ -1,7 +1,9 @@
 import type { Chunk, RawDoc } from "./types";
 
 export function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
+  // CJK chars are ~1 token each; Latin text averages ~4 chars per token.
+  const cjk = text.match(/[一-鿿㐀-䶿]/g)?.length ?? 0;
+  return cjk + Math.ceil((text.length - cjk) / 4);
 }
 
 export function hashId(s: string): string {

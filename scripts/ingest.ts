@@ -13,7 +13,7 @@ import { embed } from "../lib/minimax";
 import { saveIndex } from "../lib/index-store";
 import type { Chunk, RawDoc } from "../lib/types";
 
-const SITE = "https://www.uniontech3d.com";
+const SITES = ["https://www.uniontech3d.com", "https://www.uniontech3d.cn"];
 const DATA_DIR = join(process.cwd(), "data");
 const RAW_DIR = join(DATA_DIR, "raw");
 const RETRY = { retries: 3, baseDelayMs: 500 };
@@ -23,9 +23,17 @@ function cachePath(url: string): string {
   return join(RAW_DIR, encodeURIComponent(url));
 }
 
+// Set on every getCached call; lets the crawl loop skip the politeness
+// delay for cache hits so re-runs fast-forward to the unfetched URLs.
+let lastFetchHitNetwork = false;
+
 async function getCached(url: string, isBinary: boolean): Promise<Buffer | string> {
   const p = cachePath(url);
-  if (existsSync(p)) return isBinary ? readFileSync(p) : readFileSync(p, "utf8");
+  if (existsSync(p)) {
+    lastFetchHitNetwork = false;
+    return isBinary ? readFileSync(p) : readFileSync(p, "utf8");
+  }
+  lastFetchHitNetwork = true;
   const res = await fetchWithRetry(url, RETRY);
   if (isBinary) {
     const buf = Buffer.from(await res.arrayBuffer());
@@ -50,36 +58,38 @@ async function main() {
   const cfg = loadConfig();
   mkdirSync(RAW_DIR, { recursive: true });
 
-  const robotsBody = (await getCached(`${SITE}/robots.txt`, false).catch(() => "")) as string;
-  const robots = makeRobots(`${SITE}/robots.txt`, robotsBody);
-  const delayMs = (robots.crawlDelay() || 1) * 1000;
-
-  const entries = await expandSitemap(`${SITE}/sitemap.xml`);
-  const urls = dedupeUrls(entries.map((e) => e.url)).filter((u) => robots.allowed(u));
-  const lastmodByUrl = new Map(entries.map((e) => [normalizeUrl(e.url), e.lastmod]));
-  console.log(`Discovered ${urls.length} URLs`);
-
   const docs: RawDoc[] = [];
   let failures = 0;
-  for (const url of urls) {
-    try {
-      const lastmod = lastmodByUrl.get(url) ?? null;
-      if (isPdfUrl(url)) {
-        const buf = (await getCached(url, true)) as Buffer;
-        const text = await pdfToText(new Uint8Array(buf));
-        if (text.trim().length > 50) {
-          docs.push({ url, title: url.split("/").pop() ?? url, docType: classifyDocType(url), lastmod, sourceType: "pdf", mainText: text, specTables: [] });
+  for (const site of SITES) {
+    const robotsBody = (await getCached(`${site}/robots.txt`, false).catch(() => "")) as string;
+    const robots = makeRobots(`${site}/robots.txt`, robotsBody);
+    const delayMs = (robots.crawlDelay() || 1) * 1000;
+
+    const entries = await expandSitemap(`${site}/sitemap.xml`);
+    const urls = dedupeUrls(entries.map((e) => e.url)).filter((u) => robots.allowed(u));
+    const lastmodByUrl = new Map(entries.map((e) => [normalizeUrl(e.url), e.lastmod]));
+    console.log(`[${site}] Discovered ${urls.length} URLs`);
+
+    for (const url of urls) {
+      try {
+        const lastmod = lastmodByUrl.get(url) ?? null;
+        if (isPdfUrl(url)) {
+          const buf = (await getCached(url, true)) as Buffer;
+          const text = await pdfToText(new Uint8Array(buf));
+          if (text.trim().length > 50) {
+            docs.push({ url, title: url.split("/").pop() ?? url, docType: classifyDocType(url), lastmod, sourceType: "pdf", mainText: text, specTables: [] });
+          }
+        } else {
+          const html = (await getCached(url, false)) as string;
+          const doc = htmlToRawDoc(url, html, lastmod);
+          if (doc.mainText.trim().length > 50 || doc.specTables.length) docs.push(doc);
         }
-      } else {
-        const html = (await getCached(url, false)) as string;
-        const doc = htmlToRawDoc(url, html, lastmod);
-        if (doc.mainText.trim().length > 50 || doc.specTables.length) docs.push(doc);
+      } catch (e) {
+        failures++;
+        console.warn(`SKIP ${url}: ${String(e)}`);
       }
-    } catch (e) {
-      failures++;
-      console.warn(`SKIP ${url}: ${String(e)}`);
+      if (lastFetchHitNetwork) await sleep(delayMs);
     }
-    await sleep(delayMs);
   }
 
   let chunks: Chunk[] = [];

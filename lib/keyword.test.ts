@@ -17,6 +17,21 @@ test("keywordScores ranks higher for more overlap", () => {
   expect(scores[0]).toBeGreaterThan(scores[1]);
 });
 
+test("tokenize emits bigrams for CJK runs", () => {
+  expect(tokenize("光固化3D打印机")).toEqual(["光固", "固化", "3d", "打印", "印机"]);
+});
+
+test("tokenize keeps a lone CJK char as a single token", () => {
+  expect(tokenize("墙")).toEqual(["墙"]);
+});
+
+test("keywordScores matches Chinese queries against Chinese chunks", () => {
+  const records = [mk("工业级光固化3D打印机，成型尺寸大"), mk("dental resin colors")];
+  const scores = keywordScores(records, "光固化打印机");
+  expect(scores[0]).toBeGreaterThan(scores[1]);
+  expect(scores[1]).toBe(0);
+});
+
 test("hasExactModelMatch detects digit-bearing tokens present in chunk", () => {
   expect(hasExactModelMatch(mk("the rspro 2100 has..."), "specs of rspro 2100")).toBe(true);
   expect(hasExactModelMatch(mk("dental resin"), "specs of rspro 2100")).toBe(false);

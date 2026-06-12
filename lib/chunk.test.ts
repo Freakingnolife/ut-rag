@@ -37,3 +37,11 @@ test("buildChunks emits one chunk per spec table plus text chunks with metadata"
   expect(chunks.every((c) => c.url === "https://x.com/products/a")).toBe(true);
   expect(chunks.every((c) => c.docType === "product")).toBe(true);
 });
+
+test("estimateTokens counts CJK chars as one token each", () => {
+  expect(estimateTokens("光固化打印机")).toBe(6);
+});
+
+test("estimateTokens keeps ~4 chars per token for Latin text", () => {
+  expect(estimateTokens("12345678")).toBe(2);
+});

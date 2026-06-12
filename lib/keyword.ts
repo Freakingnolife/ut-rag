@@ -11,8 +11,20 @@ const STOPWORDS = new Set([
   "he","she","his","her","all","been","there","here","some","any",
 ]);
 
+// CJK has no word boundaries; character bigrams are the standard segmenter-free unit.
+const CJK_RUN = /[一-鿿㐀-䶿]+/;
+const TOKEN_RE = new RegExp(`[a-z0-9]+|${CJK_RUN.source}`, "g");
+
+function cjkBigrams(run: string): string[] {
+  if (run.length === 1) return [run];
+  const out: string[] = [];
+  for (let i = 0; i < run.length - 1; i++) out.push(run.slice(i, i + 2));
+  return out;
+}
+
 export function tokenize(s: string): string[] {
-  return (s.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter(Boolean);
+  const runs = s.toLowerCase().match(TOKEN_RE) ?? [];
+  return runs.flatMap((r) => (CJK_RUN.test(r) ? cjkBigrams(r) : [r]));
 }
 
 // Like tokenize but removes stopwords — use for query tokens only, not document tokens.
